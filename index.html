@@ -67,6 +67,13 @@ table.dtbl td{padding:4px 8px;border-bottom:.5px solid var(--border);text-align:
 table.dtbl td:first-child{text-align:left;font-weight:500}
 table.dtbl tr.tot td{background:var(--bg-accent);color:var(--text-accent);font-weight:500}
 .nodata{padding:24px;text-align:center;color:var(--text-muted);font-size:11px;background:var(--surface-1);border-radius:8px;margin-top:8px}
+/* ── Heatmap AP Filter ── */
+.hm-flt{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px;padding:8px 10px;background:var(--surface-1);border-radius:8px;border:.5px solid var(--border)}
+.hm-flt-lbl{font-size:10px;font-weight:600;color:var(--text-secondary);white-space:nowrap;margin-right:4px}
+.hm-flt-cnt{font-size:10px;color:var(--text-muted);margin-left:6px;white-space:nowrap}
+.hm-flt-sep{color:var(--border-strong);font-size:16px;line-height:1;margin:0 4px;user-select:none}
+.fb-clr{background:#fff2f2;color:#c0392b;border-color:#f5c6c6}
+.fb-clr:hover{background:#fde8e8}
 </style>
 
 <div class="hdr">
@@ -111,6 +118,8 @@ table.dtbl tr.tot td{background:var(--bg-accent);color:var(--text-accent);font-w
     <span><span class="ld" style="background:#e24b4a"></span>Low (&lt;40%)</span>
     <span><span class="ld" style="background:#d3d1c7"></span>Tidak ada data</span>
   </div>
+  <!-- AP Filter Heatmap — diisi oleh buildHmFilter() -->
+  <div id="hm-ap-filter"></div>
 </div>
 
 <div id="t-ind" class="tc">
@@ -127,7 +136,7 @@ table.dtbl tr.tot td{background:var(--bg-accent);color:var(--text-accent);font-w
   </div>
   <div id="it-overall" class="itc on">
     <div class="cw" id="ind-cw"><canvas id="ch-ind" role="img" aria-label="Horizontal bar chart of rates per AP"></canvas></div>
-    <div class="slbl">Tabel Denominator & Numerator per AP</div>
+    <div class="slbl">Tabel Denominator &amp; Numerator per AP</div>
     <div id="tbl-overall"></div>
     <div id="di-sec" style="display:none;margin-top:14px">
       <div class="slbl">Direct vs Indirect Beneficiary</div>
@@ -215,11 +224,27 @@ const D={
 
 const X={"IND6":{"s1":{"Manggarai Timur-04557":[511,260],"Manggarai-02839":[498,325],"Nagekeo Ngada-04678":[483,407],"Nias Selatan-04220":[518,325],"Timor Tengah Selatan-03948":[517,255],"Bengkayang-05144":[576,217],"Kubu Raya-04221":[502,183],"Landak-03780":[449,137],"Simokerto-04222":[471,264]},"s2":{"Manggarai Timur-04557":[7477,11.61,50.88,5.9058],"Manggarai-02839":[9591,14.89,65.26,9.7167],"Nagekeo Ngada-04678":[10442,16.21,84.27,13.6594],"Nias Selatan-04220":[8121,12.61,62.74,7.9097],"Timor Tengah Selatan-03948":[2992,4.64,49.32,2.2909],"Bengkayang-05144":[8808,13.67,37.67,5.1513],"Kubu Raya-04221":[7163,11.12,36.45,4.0536],"Landak-03780":[6642,10.31,30.51,3.1461],"Simokerto-04222":[3181,4.94,56.05,2.7679]},"s2t":[64417,54.6],"s4":{"Manggarai Timur-04557":[240,117,271,143],"Manggarai-02839":[231,158,267,167],"Nagekeo Ngada-04678":[237,201,246,206],"Nias Selatan-04220":[259,162,259,163],"Timor Tengah Selatan-03948":[245,124,272,131],"Bengkayang-05144":[311,132,265,85],"Kubu Raya-04221":[265,105,237,78],"Landak-03780":[224,74,225,63],"Simokerto-04222":[262,159,209,105]},"s5":{"Manggarai Timur-04557":[236,101,275,159],"Manggarai-02839":[200,159,298,166],"Nagekeo Ngada-04678":[278,237,205,170],"Nias Selatan-04220":[304,188,214,137],"Timor Tengah Selatan-03948":[179,90,338,165],"Bengkayang-05144":[328,106,248,111],"Kubu Raya-04221":[202,62,300,121],"Landak-03780":[183,64,266,73],"Simokerto-04222":[265,151,206,113]},"s6":{"Manggarai Timur-04557":[0,0,511,260],"Manggarai-02839":[0,0,498,325],"Nagekeo Ngada-04678":[18,13,465,394],"Nias Selatan-04220":[6,4,512,321],"Timor Tengah Selatan-03948":[8,6,509,249],"Bengkayang-05144":[19,8,557,209],"Kubu Raya-04221":[22,2,480,181],"Landak-03780":[30,4,419,133],"Simokerto-04222":[19,10,452,254]}},"IND7":{"s1":{"Manggarai Timur-04557":[511,111],"Manggarai-02839":[499,110],"Nagekeo Ngada-04678":[483,373],"Nias Selatan-04220":[518,137],"Timor Tengah Selatan-03948":[517,189],"Bengkayang-05144":[574,173],"Kubu Raya-04221":[501,158],"Landak-03780":[447,86],"Simokerto-04222":[471,216]},"s2":{"Manggarai Timur-04557":[7477,11.61,21.72,2.5213],"Manggarai-02839":[9591,14.89,22.04,3.2821],"Nagekeo Ngada-04678":[10442,16.21,77.23,12.5183],"Nias Selatan-04220":[8121,12.61,26.45,3.3343],"Timor Tengah Selatan-03948":[2992,4.64,36.56,1.698],"Bengkayang-05144":[8808,13.67,30.14,4.1211],"Kubu Raya-04221":[7163,11.12,31.54,3.5068],"Landak-03780":[6642,10.31,19.24,1.9838],"Simokerto-04222":[3181,4.94,45.86,2.2646]},"s2t":[64417,35.23],"s4":{"Manggarai Timur-04557":[240,64,271,47],"Manggarai-02839":[232,58,267,52],"Nagekeo Ngada-04678":[237,188,246,185],"Nias Selatan-04220":[259,71,259,66],"Timor Tengah Selatan-03948":[245,99,272,90],"Bengkayang-05144":[311,102,263,71],"Kubu Raya-04221":[264,92,237,66],"Landak-03780":[224,51,223,35],"Simokerto-04222":[262,135,209,81]},"s5":{"Manggarai Timur-04557":[236,49,275,62],"Manggarai-02839":[200,49,299,61],"Nagekeo Ngada-04678":[278,211,205,162],"Nias Selatan-04220":[304,89,214,48],"Timor Tengah Selatan-03948":[179,69,338,120],"Bengkayang-05144":[327,84,247,89],"Kubu Raya-04221":[202,45,299,113],"Landak-03780":[183,37,264,49],"Simokerto-04222":[265,116,206,100]},"s6":{"Manggarai Timur-04557":[0,0,511,111],"Manggarai-02839":[0,0,499,110],"Nagekeo Ngada-04678":[18,13,465,360],"Nias Selatan-04220":[6,1,512,136],"Timor Tengah Selatan-03948":[8,5,509,184],"Bengkayang-05144":[19,4,555,169],"Kubu Raya-04221":[22,3,479,155],"Landak-03780":[30,3,417,83],"Simokerto-04222":[19,3,452,213]}},"IND10":{"s1":{"Manggarai Timur-04557":[511,90],"Manggarai-02839":[499,67],"Nagekeo Ngada-04678":[484,129],"Nias Selatan-04220":[518,39],"Timor Tengah Selatan-03948":[517,114],"Bengkayang-05144":[569,90],"Kubu Raya-04221":[496,44],"Landak-03780":[446,47],"Simokerto-04222":[470,160]},"s2":{"Manggarai Timur-04557":[7477,11.61,17.61,2.0443],"Manggarai-02839":[9591,14.89,13.43,1.9991],"Nagekeo Ngada-04678":[10442,16.21,26.65,4.3204],"Nias Selatan-04220":[8121,12.61,7.53,0.9492],"Timor Tengah Selatan-03948":[2992,4.64,22.05,1.0242],"Bengkayang-05144":[8808,13.67,15.82,2.1628],"Kubu Raya-04221":[7163,11.12,8.87,0.9864],"Landak-03780":[6642,10.31,10.54,1.0866],"Simokerto-04222":[3181,4.94,34.04,1.6811]},"s2t":[64417,16.25],"s4":{"Manggarai Timur-04557":[240,38,271,52],"Manggarai-02839":[232,29,267,38],"Nagekeo Ngada-04678":[238,74,246,55],"Nias Selatan-04220":[259,17,259,22],"Timor Tengah Selatan-03948":[245,69,272,45],"Bengkayang-05144":[306,45,263,45],"Kubu Raya-04221":[261,28,235,16],"Landak-03780":[221,21,225,26],"Simokerto-04222":[262,94,208,66]},"s5":{"Manggarai Timur-04557":[236,30,275,60],"Manggarai-02839":[200,32,299,35],"Nagekeo Ngada-04678":[279,84,205,45],"Nias Selatan-04220":[304,24,214,15],"Timor Tengah Selatan-03948":[179,53,338,61],"Bengkayang-05144":[326,51,243,39],"Kubu Raya-04221":[199,22,297,22],"Landak-03780":[183,19,263,28],"Simokerto-04222":[264,99,206,61]},"s6":{"Manggarai Timur-04557":[0,0,511,90],"Manggarai-02839":[0,0,499,67],"Nagekeo Ngada-04678":[19,0,465,129],"Nias Selatan-04220":[6,1,512,38],"Timor Tengah Selatan-03948":[8,5,509,109],"Bengkayang-05144":[19,3,550,87],"Kubu Raya-04221":[22,1,474,43],"Landak-03780":[30,3,416,44],"Simokerto-04222":[19,3,451,157]}},"IND22":{"s1":{"Manggarai Timur-04557":[511,64],"Manggarai-02839":[499,63],"Nagekeo Ngada-04678":[483,35],"Nias Selatan-04220":[518,49],"Timor Tengah Selatan-03948":[517,168],"Bengkayang-05144":[574,64],"Kubu Raya-04221":[501,61],"Landak-03780":[447,100],"Simokerto-04222":[466,71]},"s2":{"Manggarai Timur-04557":[7477,11.61,12.52,1.4537],"Manggarai-02839":[9591,14.89,12.63,1.8798],"Nagekeo Ngada-04678":[10442,16.21,7.25,1.1746],"Nias Selatan-04220":[8121,12.61,9.46,1.1925],"Timor Tengah Selatan-03948":[2992,4.64,32.5,1.5093],"Bengkayang-05144":[8808,13.67,11.15,1.5246],"Kubu Raya-04221":[7163,11.12,12.18,1.3539],"Landak-03780":[6642,10.31,22.37,2.3067],"Simokerto-04222":[3181,4.94,15.24,0.7524]},"s2t":[64417,13.15],"s4":{"Manggarai Timur-04557":[240,23,271,41],"Manggarai-02839":[232,17,267,46],"Nagekeo Ngada-04678":[238,14,245,21],"Nias Selatan-04220":[259,21,259,28],"Timor Tengah Selatan-03948":[245,65,272,103],"Bengkayang-05144":[309,37,265,27],"Kubu Raya-04221":[265,29,236,32],"Landak-03780":[223,56,224,44],"Simokerto-04222":[260,39,206,32]},"s5":{"Manggarai Timur-04557":[236,41,275,23],"Manggarai-02839":[200,12,299,51],"Nagekeo Ngada-04678":[278,21,205,14],"Nias Selatan-04220":[304,32,214,17],"Timor Tengah Selatan-03948":[179,54,338,114],"Bengkayang-05144":[327,47,247,17],"Kubu Raya-04221":[201,38,300,23],"Landak-03780":[182,45,265,55],"Simokerto-04222":[263,38,203,33]},"s6":{"Manggarai Timur-04557":[0,0,511,64],"Manggarai-02839":[0,0,499,63],"Nagekeo Ngada-04678":[19,1,464,34],"Nias Selatan-04220":[6,1,512,48],"Timor Tengah Selatan-03948":[8,4,509,164],"Bengkayang-05144":[19,5,555,59],"Kubu Raya-04221":[22,4,479,57],"Landak-03780":[30,11,417,89],"Simokerto-04222":[19,3,447,68]}},"IND60_AD":{"s1":{"Ende-04224":[508,327],"Jakarta Utara - 07652":[525,243],"Lombok (East and North)-7293":[537,113],"Manggarai Timur-04557":[511,362],"Manggarai-02839":[499,398],"Nagekeo Ngada-04678":[484,332],"Nias Selatan-04220":[518,365],"Sumba Barat Daya-04676":[528,297],"Timor Tengah Selatan-03948":[517,185],"Bengkayang-05144":[572,359],"Kubu Raya-04221":[496,213],"Landak-03780":[443,147],"Simokerto-04222":[470,230]},"s2":{"Ende-04224":[8895,9.43,64.37,6.0712],"Jakarta Utara - 07652":[1948,2.07,46.29,0.956],"Lombok (East and North)-7293":[16547,17.55,21.04,3.692],"Manggarai Timur-04557":[7477,7.93,70.84,5.6164],"Manggarai-02839":[9591,10.17,79.76,8.1113],"Nagekeo Ngada-04678":[10442,11.07,68.6,7.5948],"Nias Selatan-04220":[8121,8.61,70.46,6.0676],"Sumba Barat Daya-04676":[2503,2.65,56.25,1.4929],"Timor Tengah Selatan-03948":[2992,3.17,35.78,1.1352],"Bengkayang-05144":[8808,9.34,62.76,5.8616],"Kubu Raya-04221":[7163,7.6,42.94,3.2616],"Landak-03780":[6642,7.04,33.18,2.337],"Simokerto-04222":[3181,3.37,48.94,1.6506]},"s2t":[94310,53.85],"s4":{"Ende-04224":[263,169,245,158],"Jakarta Utara - 07652":[261,138,264,105],"Lombok (East and North)-7293":[282,70,255,43],"Manggarai Timur-04557":[240,151,271,211],"Manggarai-02839":[232,193,267,205],"Nagekeo Ngada-04678":[238,165,246,167],"Nias Selatan-04220":[259,206,259,159],"Sumba Barat Daya-04676":[337,183,191,114],"Timor Tengah Selatan-03948":[245,97,272,88],"Bengkayang-05144":[308,202,264,157],"Kubu Raya-04221":[262,120,234,93],"Landak-03780":[221,84,222,63],"Simokerto-04222":[261,142,209,88]},"s5":{"Ende-04224":[187,135,321,192],"Lombok (East and North)-7293":[152,28,385,85],"Manggarai Timur-04557":[236,147,275,215],"Manggarai-02839":[200,165,299,233],"Nagekeo Ngada-04678":[279,202,205,130],"Nias Selatan-04220":[304,189,214,176],"Timor Tengah Selatan-03948":[179,78,338,107],"Bengkayang-05144":[325,184,247,175],"Kubu Raya-04221":[198,77,298,136],"Landak-03780":[179,62,264,85],"Simokerto-04222":[265,137,205,93]},"s6":{"Ende-04224":[18,14,490,313],"Jakarta Utara - 07652":[43,19,482,224],"Lombok (East and North)-7293":[39,10,498,103],"Manggarai Timur-04557":[0,0,511,362],"Manggarai-02839":[0,0,499,398],"Nagekeo Ngada-04678":[19,13,465,319],"Nias Selatan-04220":[6,4,512,361],"Sumba Barat Daya-04676":[11,7,517,290],"Timor Tengah Selatan-03948":[8,4,509,181],"Bengkayang-05144":[19,11,553,348],"Kubu Raya-04221":[22,14,474,199],"Landak-03780":[30,10,413,137],"Simokerto-04222":[19,9,451,221]}},"IND157":{"s1":{"Manggarai Timur-04557":[506,168],"Manggarai-02839":[498,400],"Nagekeo Ngada-04678":[484,328],"Nias Selatan-04220":[517,224],"Timor Tengah Selatan-03948":[517,121],"Bengkayang-05144":[575,226]},"s2":{"Manggarai Timur-04557":[7477,15.76,33.2,5.2339],"Manggarai-02839":[9591,20.22,80.32,16.2417],"Nagekeo Ngada-04678":[10442,22.02,67.77,14.9193],"Nias Selatan-04220":[8121,17.12,43.33,7.4183],"Timor Tengah Selatan-03948":[2992,6.31,23.4,1.4764],"Bengkayang-05144":[8808,18.57,39.3,7.2989]},"s2t":[47431,52.59],"s4":{"Manggarai Timur-04557":[240,83,266,85],"Manggarai-02839":[231,183,267,217],"Nagekeo Ngada-04678":[238,164,246,164],"Nias Selatan-04220":[258,108,259,116],"Timor Tengah Selatan-03948":[245,51,272,70],"Bengkayang-05144":[310,127,265,99]},"s5":{"Manggarai Timur-04557":[236,63,270,105],"Manggarai-02839":[199,165,299,235],"Nagekeo Ngada-04678":[279,194,205,134],"Nias Selatan-04220":[304,108,213,116],"Timor Tengah Selatan-03948":[179,48,338,73],"Bengkayang-05144":[327,121,248,105]},"s6":{"Manggarai Timur-04557":[0,0,506,168],"Manggarai-02839":[0,0,498,400],"Nagekeo Ngada-04678":[19,12,465,316],"Nias Selatan-04220":[6,1,511,223],"Timor Tengah Selatan-03948":[8,1,509,120],"Bengkayang-05144":[19,7,556,219]}},"IND167":{"s1":{"Ende-04224":[500,271],"Jakarta Utara - 07652":[498,183],"Lombok (East and North)-7293":[515,112],"Manggarai Timur-04557":[463,104],"Manggarai-02839":[454,70],"Nagekeo Ngada-04678":[482,355],"Nias Selatan-04220":[496,126],"Sumba Barat Daya-04676":[524,177],"Timor Tengah Selatan-03948":[503,168],"Bengkayang-05144":[548,159],"Kubu Raya-04221":[498,123],"Landak-03780":[440,95],"Simokerto-04222":[460,183]},"s2":{"Ende-04224":[8895,9.43,54.2,5.112],"Jakarta Utara - 07652":[1948,2.07,36.75,0.759],"Lombok (East and North)-7293":[16547,17.55,21.75,3.8157],"Manggarai Timur-04557":[7477,7.93,22.46,1.7808],"Manggarai-02839":[9591,10.17,15.42,1.568],"Nagekeo Ngada-04678":[10442,11.07,73.65,8.1547],"Nias Selatan-04220":[8121,8.61,25.4,2.1875],"Sumba Barat Daya-04676":[2503,2.65,33.78,0.8965],"Timor Tengah Selatan-03948":[2992,3.17,33.4,1.0596],"Bengkayang-05144":[8808,9.34,29.01,2.7098],"Kubu Raya-04221":[7163,7.6,24.7,1.8759],"Landak-03780":[6642,7.04,21.59,1.5206],"Simokerto-04222":[3181,3.37,39.78,1.3418]},"s2t":[94310,32.78],"s4":{"Ende-04224":[260,136,240,135],"Jakarta Utara - 07652":[251,90,247,93],"Lombok (East and North)-7293":[268,64,247,48],"Manggarai Timur-04557":[225,47,238,57],"Manggarai-02839":[210,31,244,39],"Nagekeo Ngada-04678":[237,185,245,170],"Nias Selatan-04220":[250,65,246,61],"Sumba Barat Daya-04676":[335,114,189,63],"Timor Tengah Selatan-03948":[241,85,262,83],"Bengkayang-05144":[299,96,249,63],"Kubu Raya-04221":[263,77,235,46],"Landak-03780":[219,51,221,44],"Simokerto-04222":[256,111,204,72]},"s5":{"Ende-04224":[184,94,316,177],"Lombok (East and North)-7293":[145,31,370,81],"Manggarai Timur-04557":[226,48,237,56],"Manggarai-02839":[180,45,274,25],"Nagekeo Ngada-04678":[279,207,203,148],"Nias Selatan-04220":[291,92,205,34],"Timor Tengah Selatan-03948":[176,77,327,91],"Bengkayang-05144":[311,81,237,78],"Kubu Raya-04221":[202,41,296,82],"Landak-03780":[177,36,263,59],"Simokerto-04222":[260,109,200,74]},"s6":{"Ende-04224":[17,11,483,260],"Jakarta Utara - 07652":[40,15,458,168],"Lombok (East and North)-7293":[37,10,478,102],"Manggarai Timur-04557":[0,0,463,104],"Manggarai-02839":[0,0,454,70],"Nagekeo Ngada-04678":[19,14,463,341],"Nias Selatan-04220":[5,2,491,124],"Sumba Barat Daya-04676":[9,7,515,170],"Timor Tengah Selatan-03948":[8,3,495,165],"Bengkayang-05144":[18,4,530,155],"Kubu Raya-04221":[22,8,476,115],"Landak-03780":[30,2,410,93],"Simokerto-04222":[18,3,442,180]}},"C2A.027994":{"s1":{"Jakarta Utara - 07652":[525,0],"Lombok (East and North)-7293":[319,0],"Manggarai Timur-04557":[504,145],"Manggarai-02839":[499,71],"Nagekeo Ngada-04678":[484,274],"Nias Selatan-04220":[518,163],"Timor Tengah Selatan-03948":[517,154],"Bengkayang-05144":[541,132],"Simokerto-04222":[1,0]},"s2":{"Jakarta Utara - 07652":[1948,2.82,0,0],"Lombok (East and North)-7293":[16547,23.94,0,0],"Manggarai Timur-04557":[7477,10.82,28.77,3.1127],"Manggarai-02839":[9591,13.88,14.23,1.9747],"Nagekeo Ngada-04678":[10442,15.11,56.61,8.554],"Nias Selatan-04220":[8121,11.75,31.47,3.6978],"Timor Tengah Selatan-03948":[2992,4.33,29.79,1.2896],"Bengkayang-05144":[8808,12.75,24.4,3.1098],"Simokerto-04222":[3181,4.6,0,0]},"s2t":[69107,21.74],"s4":{"Jakarta Utara - 07652":[261,0,264,0],"Lombok (East and North)-7293":[171,0,148,0],"Manggarai Timur-04557":[236,59,268,86],"Manggarai-02839":[232,32,267,39],"Nagekeo Ngada-04678":[238,146,246,128],"Nias Selatan-04220":[259,73,259,90],"Timor Tengah Selatan-03948":[245,59,272,95],"Bengkayang-05144":[291,78,250,54],"Simokerto-04222":[1,0,0,0]},"s5":{"Jakarta Utara - 07652":[0,0,525,0],"Lombok (East and North)-7293":[75,0,244,0],"Manggarai Timur-04557":[234,48,270,97],"Manggarai-02839":[200,33,299,38],"Nagekeo Ngada-04678":[279,142,205,132],"Nias Selatan-04220":[304,93,214,70],"Timor Tengah Selatan-03948":[179,57,338,97],"Bengkayang-05144":[306,62,235,70],"Simokerto-04222":[0,0,1,0]},"s6":{"Jakarta Utara - 07652":[43,0,482,0],"Lombok (East and North)-7293":[16,0,303,0],"Manggarai Timur-04557":[0,0,504,145],"Manggarai-02839":[0,0,499,71],"Nagekeo Ngada-04678":[19,8,465,266],"Nias Selatan-04220":[6,0,512,163],"Timor Tengah Selatan-03948":[8,1,509,153],"Bengkayang-05144":[18,3,523,129],"Simokerto-04222":[0,0,1,0]}},"IND63":{"s1":{"Biak -03413":[505,202],"Ende-04224":[1137,146],"Jakarta Utara - 07652":[1103,41],"Lombok (East and North)-7293":[1825,424],"Manggarai Timur-04557":[1118,67],"Manggarai-02839":[1208,98],"Nagekeo Ngada-04678":[1025,306],"Nias Selatan-04220":[776,112],"Sentani & Sarmi -03413":[518,159],"Sumba Barat Daya-04676":[947,463],"Timor Tengah Selatan-03948":[1155,138],"Bengkayang-05144":[853,126],"Kubu Raya-04221":[509,105],"Landak-03780":[445,170],"Simokerto-04222":[1327,263],"Timor Perbatasan-Belu":[470,142],"Timor Perbatasan-Malaka":[470,104]},"s2":{"Biak -03413":[7979,6.15,40.0,2.4609],"Ende-04224":[8895,6.86,12.84,0.8807],"Jakarta Utara - 07652":[1948,1.5,3.72,0.0558],"Lombok (East and North)-7293":[16547,12.76,23.23,2.9642],"Manggarai Timur-04557":[7477,5.77,5.99,0.3455],"Manggarai-02839":[9591,7.4,8.11,0.5999],"Nagekeo Ngada-04678":[10442,8.05,29.85,2.4037],"Nias Selatan-04220":[8121,6.26,14.43,0.9038],"Sentani & Sarmi -03413":[17191,13.26,30.69,4.0687],"Sumba Barat Daya-04676":[2503,1.93,48.89,0.9436],"Timor Tengah Selatan-03948":[2992,2.31,11.95,0.2756],"Bengkayang-05144":[8808,6.79,14.77,1.0032],"Kubu Raya-04221":[7163,5.52,20.63,1.1393],"Landak-03780":[6642,5.12,38.2,1.9565],"Simokerto-04222":[3181,2.45,19.82,0.4861],"Timor Perbatasan-Belu":[1368,1.05,30.21,0.3187],"Timor Perbatasan-Malaka":[8843,6.82,22.13,1.5088]},"s2t":[129691,22.32],"s6":{"Biak -03413":[8,2,497,200],"Ende-04224":[128,17,1009,129],"Jakarta Utara - 07652":[4,2,1099,39],"Lombok (East and North)-7293":[43,9,1782,415],"Manggarai Timur-04557":[11,0,1107,67],"Manggarai-02839":[17,1,1191,97],"Nagekeo Ngada-04678":[18,7,1007,299],"Nias Selatan-04220":[7,3,769,109],"Sentani & Sarmi -03413":[13,4,505,155],"Sumba Barat Daya-04676":[36,15,911,448],"Timor Tengah Selatan-03948":[5,1,1150,137],"Bengkayang-05144":[22,4,831,122],"Kubu Raya-04221":[22,5,487,100],"Landak-03780":[36,16,409,154],"Simokerto-04222":[10,2,1317,261],"Timor Perbatasan-Belu":[2,1,468,141],"Timor Perbatasan-Malaka":[10,4,460,100]}},"IND80":{"s1":{"Biak -03413":[505,480],"Jakarta Utara - 07652":[566,416],"Lombok (East and North)-7293":[1619,1351],"Manggarai Timur-04557":[1118,462],"Manggarai-02839":[1208,794],"Nagekeo Ngada-04678":[993,752],"Nias Selatan-04220":[659,456],"Sentani & Sarmi -03413":[518,415],"Sumba Barat Daya-04676":[944,500],"Timor Tengah Selatan-03948":[1155,882],"Bengkayang-05144":[844,683],"Timor Perbatasan-Belu":[360,236],"Timor Perbatasan-Malaka":[302,71]},"s2":{"Biak -03413":[7979,7.69,95.05,7.3057],"Jakarta Utara - 07652":[1948,1.88,73.5,1.3792],"Lombok (East and North)-7293":[16547,15.94,83.45,13.3011],"Manggarai Timur-04557":[7477,7.2,41.32,2.9764],"Manggarai-02839":[9591,9.24,65.73,6.0727],"Nagekeo Ngada-04678":[10442,10.06,75.73,7.6175],"Nias Selatan-04220":[8121,7.82,69.2,5.4131],"Sentani & Sarmi -03413":[17191,16.56,80.12,13.2672],"Sumba Barat Daya-04676":[2503,2.41,52.97,1.2771],"Timor Tengah Selatan-03948":[2992,2.88,76.36,2.2009],"Bengkayang-05144":[8808,8.48,80.92,6.8662],"Timor Perbatasan-Belu":[1368,1.32,65.56,0.8639],"Timor Perbatasan-Malaka":[8843,8.52,23.51,2.0027]},"s2t":[103810,70.54],"s6":{"Biak -03413":[8,8,497,472],"Jakarta Utara - 07652":[3,1,563,415],"Lombok (East and North)-7293":[39,27,1580,1324],"Manggarai Timur-04557":[11,0,1107,462],"Manggarai-02839":[17,5,1191,789],"Nagekeo Ngada-04678":[18,13,975,739],"Nias Selatan-04220":[7,2,652,454],"Sentani & Sarmi -03413":[13,9,505,406],"Sumba Barat Daya-04676":[36,20,908,480],"Timor Tengah Selatan-03948":[5,4,1150,878],"Bengkayang-05144":[23,15,821,668],"Timor Perbatasan-Belu":[2,2,358,234],"Timor Perbatasan-Malaka":[8,2,294,69]}},"IND81":{"s1":{"Ende-04224":[746,93],"Jakarta Utara - 07652":[1103,113],"Lombok (East and North)-7293":[1813,449],"Manggarai Timur-04557":[607,9],"Manggarai-02839":[715,7],"Nagekeo Ngada-04678":[940,346],"Nias Selatan-04220":[776,93],"Sumba Barat Daya-04676":[734,452],"Timor Tengah Selatan-03948":[1155,416],"Kubu Raya-04221":[506,116],"Simokerto-04222":[1286,190],"Timor Perbatasan-Belu":[469,110],"Timor Perbatasan-Malaka":[469,207]},"s2":{"Ende-04224":[8895,9.99,12.47,1.245],"Jakarta Utara - 07652":[1948,2.19,10.24,0.2241],"Lombok (East and North)-7293":[16547,18.58,24.77,4.6008],"Manggarai Timur-04557":[7477,8.39,1.48,0.1245],"Manggarai-02839":[9591,10.77,0.98,0.1054],"Nagekeo Ngada-04678":[10442,11.72,36.81,4.3151],"Nias Selatan-04220":[8121,9.12,11.98,1.0927],"Sumba Barat Daya-04676":[2503,2.81,61.58,1.7305],"Timor Tengah Selatan-03948":[2992,3.36,36.02,1.2099],"Kubu Raya-04221":[7163,8.04,22.92,1.8436],"Simokerto-04222":[3181,3.57,14.77,0.5276],"Timor Perbatasan-Belu":[1368,1.54,23.45,0.3602],"Timor Perbatasan-Malaka":[8843,9.93,44.14,4.3819]},"s2t":[89071,21.76],"s6":{"Ende-04224":[117,18,629,75],"Jakarta Utara - 07652":[4,0,1099,113],"Lombok (East and North)-7293":[43,13,1770,436],"Manggarai Timur-04557":[0,0,607,9],"Manggarai-02839":[0,0,715,7],"Nagekeo Ngada-04678":[16,5,924,341],"Nias Selatan-04220":[7,0,769,93],"Sumba Barat Daya-04676":[102,68,632,384],"Timor Tengah Selatan-03948":[5,2,1150,414],"Kubu Raya-04221":[22,6,484,110],"Simokerto-04222":[9,3,1277,187],"Timor Perbatasan-Belu":[2,0,467,110],"Timor Perbatasan-Malaka":[9,3,460,204]}},"IND96":{"s1":{"Biak -03413":[505,442],"Ende-04224":[607,474],"Jakarta Utara - 07652":[554,525],"Lombok (East and North)-7293":[631,447],"Manggarai Timur-04557":[539,417],"Manggarai-02839":[458,372],"Nagekeo Ngada-04678":[534,336],"Nias Selatan-04220":[518,518],"Sentani & Sarmi -03413":[518,365],"Sumba Barat Daya-04676":[733,658],"Timor Tengah Selatan-03948":[548,417],"Simokerto-04222":[792,786],"Timor Perbatasan-Belu":[470,269],"Timor Perbatasan-Malaka":[470,343]},"s2":{"Biak -03413":[7979,7.45,87.52,6.522],"Ende-04224":[8895,8.31,78.09,6.4869],"Jakarta Utara - 07652":[1948,1.82,94.77,1.724],"Lombok (East and North)-7293":[16547,15.45,70.84,10.9471],"Manggarai Timur-04557":[7477,6.98,77.37,5.4022],"Manggarai-02839":[9591,8.96,81.22,7.2751],"Nagekeo Ngada-04678":[10442,9.75,62.92,6.1359],"Nias Selatan-04220":[8121,7.58,100,7.5842],"Sentani & Sarmi -03413":[17191,16.05,70.46,11.3126],"Sumba Barat Daya-04676":[2503,2.34,89.77,2.0984],"Timor Tengah Selatan-03948":[2992,2.79,76.09,2.1263],"Simokerto-04222":[3181,2.97,99.24,2.9482],"Timor Perbatasan-Belu":[1368,1.28,57.23,0.7312],"Timor Perbatasan-Malaka":[8843,8.26,72.98,6.0269]},"s2t":[107078,77.32],"s6":{"Biak -03413":[8,7,497,435],"Ende-04224":[112,102,495,372],"Jakarta Utara - 07652":[1,1,553,524],"Lombok (East and North)-7293":[11,8,620,439],"Manggarai Timur-04557":[2,2,537,415],"Manggarai-02839":[3,1,455,371],"Nagekeo Ngada-04678":[5,4,529,332],"Nias Selatan-04220":[3,3,515,515],"Sentani & Sarmi -03413":[13,8,505,357],"Sumba Barat Daya-04676":[102,100,631,558],"Timor Tengah Selatan-03948":[1,0,547,417],"Simokerto-04222":[6,6,786,780],"Timor Perbatasan-Belu":[2,2,468,267],"Timor Perbatasan-Malaka":[10,5,460,338]}},"IND97":{"s1":{"Biak -03413":[505,439],"Ende-04224":[608,445],"Jakarta Utara - 07652":[554,518],"Lombok (East and North)-7293":[631,459],"Manggarai Timur-04557":[541,501],"Manggarai-02839":[457,346],"Nagekeo Ngada-04678":[534,484],"Nias Selatan-04220":[518,517],"Sentani & Sarmi -03413":[518,379],"Sumba Barat Daya-04676":[733,366],"Timor Tengah Selatan-03948":[548,528],"Simokerto-04222":[792,595],"Timor Perbatasan-Belu":[470,333],"Timor Perbatasan-Malaka":[470,215]},"s2":{"Biak -03413":[7979,7.45,86.93,6.4777],"Ende-04224":[8895,8.31,73.19,6.08],"Jakarta Utara - 07652":[1948,1.82,93.5,1.701],"Lombok (East and North)-7293":[16547,15.45,72.74,11.2409],"Manggarai Timur-04557":[7477,6.98,92.61,6.4665],"Manggarai-02839":[9591,8.96,75.71,6.7815],"Nagekeo Ngada-04678":[10442,9.75,90.64,8.8387],"Nias Selatan-04220":[8121,7.58,99.81,7.5695],"Sentani & Sarmi -03413":[17191,16.05,73.17,11.7466],"Sumba Barat Daya-04676":[2503,2.34,49.93,1.1672],"Timor Tengah Selatan-03948":[2992,2.79,96.35,2.6922],"Simokerto-04222":[3181,2.97,75.13,2.2318],"Timor Perbatasan-Belu":[1368,1.28,70.85,0.9052],"Timor Perbatasan-Malaka":[8843,8.26,45.74,3.7778]},"s2t":[107078,77.68],"s6":{"Biak -03413":[8,5,497,434],"Ende-04224":[112,75,496,370],"Jakarta Utara - 07652":[1,1,553,517],"Lombok (East and North)-7293":[11,8,620,451],"Manggarai Timur-04557":[2,1,539,500],"Manggarai-02839":[3,1,454,345],"Nagekeo Ngada-04678":[5,5,529,479],"Nias Selatan-04220":[3,3,515,514],"Sentani & Sarmi -03413":[13,10,505,369],"Sumba Barat Daya-04676":[102,43,631,323],"Timor Tengah Selatan-03948":[1,1,547,527],"Simokerto-04222":[6,4,786,591],"Timor Perbatasan-Belu":[2,2,468,331],"Timor Perbatasan-Malaka":[10,2,460,213]}},"IND99":{"s1":{"Biak -03413":[505,137],"Ende-04224":[608,167],"Jakarta Utara - 07652":[554,507],"Lombok (East and North)-7293":[629,1],"Manggarai Timur-04557":[541,41],"Manggarai-02839":[457,140],"Nagekeo Ngada-04678":[533,328],"Nias Selatan-04220":[776,359],"Sentani & Sarmi -03413":[518,11],"Sumba Barat Daya-04676":[733,50],"Timor Tengah Selatan-03948":[548,214],"Bengkayang-05144":[852,174],"Simokerto-04222":[792,593],"Timor Perbatasan-Belu":[470,0],"Timor Perbatasan-Malaka":[470,0]},"s2":{"Biak -03413":[7979,6.89,27.13,1.8679],"Ende-04224":[8895,7.68,27.47,2.1083],"Jakarta Utara - 07652":[1948,1.68,91.52,1.5384],"Lombok (East and North)-7293":[16547,14.28,0.16,0.0227],"Manggarai Timur-04557":[7477,6.45,7.58,0.489],"Manggarai-02839":[9591,8.28,30.63,2.5354],"Nagekeo Ngada-04678":[10442,9.01,61.54,5.545],"Nias Selatan-04220":[8121,7.01,46.26,3.242],"Sentani & Sarmi -03413":[17191,14.83,2.12,0.315],"Sumba Barat Daya-04676":[2503,2.16,6.82,0.1473],"Timor Tengah Selatan-03948":[2992,2.58,39.05,1.0082],"Bengkayang-05144":[8808,7.6,20.42,1.5522],"Simokerto-04222":[3181,2.74,74.87,2.0552],"Timor Perbatasan-Belu":[1368,1.18,0,0],"Timor Perbatasan-Malaka":[8843,7.63,0,0]},"s2t":[115886,22.43],"s6":{"Biak -03413":[8,4,497,133],"Ende-04224":[112,17,496,150],"Jakarta Utara - 07652":[1,1,553,506],"Lombok (East and North)-7293":[11,0,618,1],"Manggarai Timur-04557":[2,0,539,41],"Manggarai-02839":[3,1,454,139],"Nagekeo Ngada-04678":[5,3,528,325],"Nias Selatan-04220":[7,3,769,356],"Sentani & Sarmi -03413":[13,0,505,11],"Sumba Barat Daya-04676":[102,35,631,15],"Timor Tengah Selatan-03948":[1,1,547,213],"Bengkayang-05144":[23,4,829,170],"Simokerto-04222":[6,2,786,591],"Timor Perbatasan-Belu":[2,0,468,0],"Timor Perbatasan-Malaka":[10,0,460,0]}},"IND107":{"s1":{"Biak -03413":[505,458],"Ende-04224":[1138,1131],"Jakarta Utara - 07652":[1103,1068],"Lombok (East and North)-7293":[1819,1761],"Manggarai Timur-04557":[1118,1091],"Manggarai-02839":[1208,1202],"Nagekeo Ngada-04678":[1024,1017],"Nias Selatan-04220":[776,762],"Sentani & Sarmi -03413":[518,426],"Sumba Barat Daya-04676":[949,901],"Timor Tengah Selatan-03948":[1155,1107],"Bengkayang-05144":[851,803],"Kubu Raya-04221":[506,478],"Landak-03780":[446,422],"Simokerto-04222":[1324,1279],"Timor Perbatasan-Belu":[470,463],"Timor Perbatasan-Malaka":[470,386]},"s2":{"Biak -03413":[7979,6.15,90.69,5.5797],"Ende-04224":[8895,6.86,99.38,6.8164],"Jakarta Utara - 07652":[1948,1.5,96.83,1.4544],"Lombok (East and North)-7293":[16547,12.76,96.81,12.352],"Manggarai Timur-04557":[7477,5.77,97.58,5.626],"Manggarai-02839":[9591,7.4,99.5,7.3585],"Nagekeo Ngada-04678":[10442,8.05,99.32,7.9964],"Nias Selatan-04220":[8121,6.26,98.2,6.1488],"Sentani & Sarmi -03413":[17191,13.26,82.24,10.9011],"Sumba Barat Daya-04676":[2503,1.93,94.94,1.8324],"Timor Tengah Selatan-03948":[2992,2.31,95.84,2.2111],"Bengkayang-05144":[8808,6.79,94.36,6.4085],"Kubu Raya-04221":[7163,5.52,94.47,5.2175],"Landak-03780":[6642,5.12,94.62,4.8458],"Simokerto-04222":[3181,2.45,96.6,2.3694],"Timor Perbatasan-Belu":[1368,1.05,98.51,1.0391],"Timor Perbatasan-Malaka":[8843,6.82,82.13,5.5999]},"s2t":[129691,93.76]},"IND141":{"s1":{"Biak -03413":[505,193],"Ende-04224":[1134,387],"Jakarta Utara - 07652":[1069,121],"Lombok (East and North)-7293":[1002,163],"Manggarai Timur-04557":[1118,50],"Manggarai-02839":[1208,142],"Nagekeo Ngada-04678":[940,298],"Nias Selatan-04220":[771,303],"Sentani & Sarmi -03413":[511,154],"Sumba Barat Daya-04676":[721,202],"Timor Tengah Selatan-03948":[1150,253],"Bengkayang-05144":[830,138],"Kubu Raya-04221":[500,45],"Landak-03780":[445,80],"Simokerto-04222":[1289,103],"Timor Perbatasan-Belu":[432,55],"Timor Perbatasan-Malaka":[436,21]},"s2":{"Biak -03413":[7979,6.15,38.22,2.3513],"Ende-04224":[8895,6.86,34.13,2.3406],"Jakarta Utara - 07652":[1948,1.5,11.32,0.17],"Lombok (East and North)-7293":[16547,12.76,16.27,2.0755],"Manggarai Timur-04557":[7477,5.77,4.47,0.2578],"Manggarai-02839":[9591,7.4,11.75,0.8693],"Nagekeo Ngada-04678":[10442,8.05,31.7,2.5525],"Nias Selatan-04220":[8121,6.26,39.3,2.4609],"Sentani & Sarmi -03413":[17191,13.26,30.14,3.9948],"Sumba Barat Daya-04676":[2503,1.93,28.02,0.5407],"Timor Tengah Selatan-03948":[2992,2.31,22.0,0.5075],"Bengkayang-05144":[8808,6.79,16.63,1.1292],"Kubu Raya-04221":[7163,5.52,9.0,0.4971],"Landak-03780":[6642,5.12,17.98,0.9207],"Simokerto-04222":[3181,2.45,7.99,0.196],"Timor Perbatasan-Belu":[1368,1.05,12.73,0.1343],"Timor Perbatasan-Malaka":[8843,6.82,4.82,0.3284]},"s2t":[129691,21.33]},"IND145":{"s1":{"Biak -03413":[505,369],"Ende-04224":[1135,1094],"Jakarta Utara - 07652":[1103,804],"Lombok (East and North)-7293":[1825,1272],"Manggarai Timur-04557":[1118,1011],"Manggarai-02839":[1208,1181],"Nagekeo Ngada-04678":[1017,995],"Nias Selatan-04220":[776,715],"Sentani & Sarmi -03413":[518,292],"Sumba Barat Daya-04676":[946,737],"Timor Tengah Selatan-03948":[1155,1014],"Bengkayang-05144":[857,664],"Kubu Raya-04221":[505,406],"Landak-03780":[445,291],"Simokerto-04222":[1326,1151],"Timor Perbatasan-Belu":[470,379],"Timor Perbatasan-Malaka":[470,316]},"s2":{"Biak -03413":[7979,6.15,73.07,4.4955],"Ende-04224":[8895,6.86,96.39,6.6109],"Jakarta Utara - 07652":[1948,1.5,72.89,1.0949],"Lombok (East and North)-7293":[16547,12.76,69.7,8.8927],"Manggarai Timur-04557":[7477,5.77,90.43,5.2135],"Manggarai-02839":[9591,7.4,97.76,7.23],"Nagekeo Ngada-04678":[10442,8.05,97.84,7.8773],"Nias Selatan-04220":[8121,6.26,92.14,5.7696],"Sentani & Sarmi -03413":[17191,13.26,56.37,7.4721],"Sumba Barat Daya-04676":[2503,1.93,77.91,1.5036],"Timor Tengah Selatan-03948":[2992,2.31,87.79,2.0254],"Bengkayang-05144":[8808,6.79,77.48,5.262],"Kubu Raya-04221":[7163,5.52,80.4,4.4404],"Landak-03780":[6642,5.12,65.39,3.3491],"Simokerto-04222":[3181,2.45,86.8,2.129],"Timor Perbatasan-Belu":[1368,1.05,80.64,0.8506],"Timor Perbatasan-Malaka":[8843,6.82,67.23,4.5844]},"s2t":[129691,78.8]},"IND31":{"s1":{"Ende-04224":[58,40],"Jakarta Utara - 07652":[471,277],"Lombok (East and North)-7293":[296,241],"Manggarai Timur-04557":[72,59],"Manggarai-02839":[92,66],"Nagekeo Ngada-04678":[61,51],"Nias Selatan-04220":[14,3],"Sumba Barat Daya-04676":[173,120],"Timor Tengah Selatan-03948":[41,26],"Bengkayang-05144":[72,29],"Simokerto-04222":[262,92],"Timor Perbatasan-Belu":[13,7],"Timor Perbatasan-Malaka":[10,4]},"s2":{"Ende-04224":[8895,9.81,68.97,6.7623],"Jakarta Utara - 07652":[1948,2.15,58.81,1.2629],"Lombok (East and North)-7293":[16547,18.24,81.42,14.8512],"Manggarai Timur-04557":[7477,8.24,81.94,6.754],"Manggarai-02839":[9591,10.57,71.74,7.5847],"Nagekeo Ngada-04678":[10442,11.51,83.61,9.6237],"Nias Selatan-04220":[8121,8.95,21.43,1.9183],"Sumba Barat Daya-04676":[2503,2.76,69.36,1.9139],"Timor Tengah Selatan-03948":[2992,3.3,63.41,2.0915],"Bengkayang-05144":[8808,9.71,40.28,3.9107],"Simokerto-04222":[3181,3.51,35.11,1.2313],"Timor Perbatasan-Belu":[1368,1.51,53.85,0.812],"Timor Perbatasan-Malaka":[8843,9.75,40.0,3.8992]},"s2t":[90716,62.62]},"IND60_CG":{"s1":{"Biak -03413":[505,97],"Ende-04224":[861,561],"Jakarta Utara - 07652":[1103,597],"Lombok (East and North)-7293":[897,262],"Manggarai Timur-04557":[607,237],"Manggarai-02839":[709,672],"Nagekeo Ngada-04678":[1019,750],"Nias Selatan-04220":[517,96],"Sentani & Sarmi -03413":[518,182],"Sumba Barat Daya-04676":[942,476],"Timor Tengah Selatan-03948":[638,274],"Bengkayang-05144":[548,340],"Kubu Raya-04221":[507,232],"Landak-03780":[378,147],"Simokerto-04222":[870,564],"Timor Perbatasan-Belu":[469,262],"Timor Perbatasan-Malaka":[468,349]},"s2":{"Biak -03413":[7979,6.15,19.21,1.1817],"Ende-04224":[8895,6.86,65.16,4.4689],"Jakarta Utara - 07652":[1948,1.5,54.13,0.813],"Lombok (East and North)-7293":[16547,12.76,29.21,3.7266],"Manggarai Timur-04557":[7477,5.77,39.04,2.251],"Manggarai-02839":[9591,7.4,94.78,7.0093],"Nagekeo Ngada-04678":[10442,8.05,73.6,5.926],"Nias Selatan-04220":[8121,6.26,18.57,1.1627],"Sentani & Sarmi -03413":[17191,13.26,35.14,4.6573],"Sumba Barat Daya-04676":[2503,1.93,50.53,0.9752],"Timor Tengah Selatan-03948":[2992,2.31,42.95,0.9908],"Bengkayang-05144":[8808,6.79,62.04,4.2137],"Kubu Raya-04221":[7163,5.52,45.76,2.5273],"Landak-03780":[6642,5.12,38.89,1.9917],"Simokerto-04222":[3181,2.45,64.83,1.5901],"Timor Perbatasan-Belu":[1368,1.05,55.86,0.5893],"Timor Perbatasan-Malaka":[8843,6.82,74.57,5.0847]},"s2t":[129691,49.16]},"IND27":{"s1":{"Bengkayang-05144":[569,0],"Kubu Raya-04221":[492,0],"Landak-03780":[437,2],"Simokerto-04222":[468,0]},"s2":{"Bengkayang-05144":[8808,34.15,0,0],"Kubu Raya-04221":[7163,27.77,0,0],"Landak-03780":[6642,25.75,0.46,0.1178],"Simokerto-04222":[3181,12.33,0,0]},"s2t":[25794,0.12]},"IND160":{"s1":{"Ende-04224":[630,199],"Jakarta Utara - 07652":[573,113],"Lombok (East and North)-7293":[254,11],"Manggarai Timur-04557":[602,161],"Manggarai-02839":[708,114],"Nagekeo Ngada-04678":[556,87],"Nias Selatan-04220":[219,53],"Sumba Barat Daya-04676":[732,206],"Timor Tengah Selatan-03948":[633,257],"Bengkayang-05144":[315,74],"Simokerto-04222":[873,152],"Timor Perbatasan-Belu":[398,96],"Timor Perbatasan-Malaka":[316,99]},"s2":{"Ende-04224":[8895,9.81,31.59,3.0972],"Jakarta Utara - 07652":[1948,2.15,19.72,0.4235],"Lombok (East and North)-7293":[16547,18.24,4.33,0.7899],"Manggarai Timur-04557":[7477,8.24,26.74,2.2043],"Manggarai-02839":[9591,10.57,16.1,1.7024],"Nagekeo Ngada-04678":[10442,11.51,15.65,1.8011],"Nias Selatan-04220":[8121,8.95,24.2,2.1665],"Sumba Barat Daya-04676":[2503,2.76,28.14,0.7765],"Timor Tengah Selatan-03948":[2992,3.3,40.6,1.3391],"Bengkayang-05144":[8808,9.71,23.49,2.2809],"Simokerto-04222":[3181,3.51,17.41,0.6105],"Timor Perbatasan-Belu":[1368,1.51,24.12,0.3637],"Timor Perbatasan-Malaka":[8843,9.75,31.33,3.054]},"s2t":[90716,20.61]},"IND168":{"s1":{"Biak -03413":[500,312],"Ende-04224":[1112,649],"Jakarta Utara - 07652":[1070,532],"Lombok (East and North)-7293":[912,356],"Manggarai Timur-04557":[601,46],"Manggarai-02839":[705,333],"Nagekeo Ngada-04678":[1008,711],"Nias Selatan-04220":[516,49],"Sentani & Sarmi -03413":[507,305],"Sumba Barat Daya-04676":[936,318],"Timor Tengah Selatan-03948":[635,287],"Bengkayang-05144":[812,258],"Kubu Raya-04221":[499,203],"Landak-03780":[440,142],"Simokerto-04222":[860,310],"Timor Perbatasan-Belu":[447,116],"Timor Perbatasan-Malaka":[469,194]},"s2":{"Biak -03413":[7979,6.15,62.4,3.839],"Ende-04224":[8895,6.86,58.36,4.0029],"Jakarta Utara - 07652":[1948,1.5,49.72,0.7468],"Lombok (East and North)-7293":[16547,12.76,39.04,4.9804],"Manggarai Timur-04557":[7477,5.77,7.65,0.4413],"Manggarai-02839":[9591,7.4,47.23,3.4931],"Nagekeo Ngada-04678":[10442,8.05,70.54,5.6791],"Nias Selatan-04220":[8121,6.26,9.5,0.5946],"Sentani & Sarmi -03413":[17191,13.26,60.16,7.9741],"Sumba Barat Daya-04676":[2503,1.93,33.97,0.6557],"Timor Tengah Selatan-03948":[2992,2.31,45.2,1.0427],"Bengkayang-05144":[8808,6.79,31.77,2.1579],"Kubu Raya-04221":[7163,5.52,40.68,2.2469],"Landak-03780":[6642,5.12,32.27,1.6528],"Simokerto-04222":[3181,2.45,36.05,0.8841],"Timor Perbatasan-Belu":[1368,1.05,25.95,0.2737],"Timor Perbatasan-Malaka":[8843,6.82,41.36,2.8205]},"s2t":[129691,43.49]},"C1A.0022":{"s1":{"Ende-04224":[207,113],"Jakarta Utara - 07652":[626,458],"Lombok (East and North)-7293":[630,472],"Manggarai Timur-04557":[287,51],"Manggarai-02839":[570,106],"Nagekeo Ngada-04678":[261,128],"Nias Selatan-04220":[129,60],"Sumba Barat Daya-04676":[558,111],"Timor Tengah Selatan-03948":[278,75],"Bengkayang-05144":[242,134],"Simokerto-04222":[588,241],"Timor Perbatasan-Belu":[149,28],"Timor Perbatasan-Malaka":[114,31]},"s2":{"Ende-04224":[8895,9.81,54.59,5.3527],"Jakarta Utara - 07652":[1948,2.15,73.16,1.5711],"Lombok (East and North)-7293":[16547,18.24,74.92,13.6659],"Manggarai Timur-04557":[7477,8.24,17.77,1.4646],"Manggarai-02839":[9591,10.57,18.6,1.9661],"Nagekeo Ngada-04678":[10442,11.51,49.04,5.6451],"Nias Selatan-04220":[8121,8.95,46.51,4.1638],"Sumba Barat Daya-04676":[2503,2.76,19.89,0.5489],"Timor Tengah Selatan-03948":[2992,3.3,26.98,0.8898],"Bengkayang-05144":[8808,9.71,55.37,5.3763],"Simokerto-04222":[3181,3.51,40.99,1.4372],"Timor Perbatasan-Belu":[1368,1.51,18.79,0.2834],"Timor Perbatasan-Malaka":[8843,9.75,27.19,2.6508]},"s2t":[90716,45.02]},"C1A.0016":{"s1":{"Ende-04224":[207,164],"Jakarta Utara - 07652":[626,569],"Lombok (East and North)-7293":[627,535],"Manggarai Timur-04557":[287,228],"Manggarai-02839":[570,488],"Nagekeo Ngada-04678":[261,223],"Nias Selatan-04220":[129,110],"Sumba Barat Daya-04676":[558,257],"Timor Tengah Selatan-03948":[278,247],"Bengkayang-05144":[240,214],"Simokerto-04222":[586,536],"Timor Perbatasan-Belu":[149,113],"Timor Perbatasan-Malaka":[114,87]},"s2":{"Ende-04224":[8895,9.81,79.23,7.7685],"Jakarta Utara - 07652":[1948,2.15,90.89,1.9518],"Lombok (East and North)-7293":[16547,18.24,85.33,15.564],"Manggarai Timur-04557":[7477,8.24,79.44,6.5478],"Manggarai-02839":[9591,10.57,85.61,9.0516],"Nagekeo Ngada-04678":[10442,11.51,85.44,9.8348],"Nias Selatan-04220":[8121,8.95,85.27,7.6336],"Sumba Barat Daya-04676":[2503,2.76,46.06,1.2708],"Timor Tengah Selatan-03948":[2992,3.3,88.85,2.9304],"Bengkayang-05144":[8808,9.71,89.17,8.6576],"Simokerto-04222":[3181,3.51,91.47,3.2074],"Timor Perbatasan-Belu":[1368,1.51,75.84,1.1437],"Timor Perbatasan-Malaka":[8843,9.75,76.32,7.4393]},"s2t":[90716,83.0]},"C1A.0059":{"s1":{"Jakarta Utara - 07652":[1102,1072],"Lombok (East and North)-7293":[944,913],"Manggarai Timur-04557":[604,600],"Manggarai-02839":[708,699],"Nagekeo Ngada-04678":[527,510],"Nias Selatan-04220":[221,187],"Sumba Barat Daya-04676":[732,603],"Timor Tengah Selatan-03948":[638,595],"Bengkayang-05144":[318,150],"Timor Perbatasan-Belu":[400,334],"Timor Perbatasan-Malaka":[318,255]},"s2":{"Jakarta Utara - 07652":[1948,2.48,97.28,2.4097],"Lombok (East and North)-7293":[16547,21.04,96.72,20.3505],"Manggarai Timur-04557":[7477,9.51,99.34,9.4449],"Manggarai-02839":[9591,12.2,98.73,12.041],"Nagekeo Ngada-04678":[10442,13.28,96.77,12.8499],"Nias Selatan-04220":[8121,10.33,84.62,8.7381],"Sumba Barat Daya-04676":[2503,3.18,82.38,2.6219],"Timor Tengah Selatan-03948":[2992,3.8,93.26,3.5483],"Bengkayang-05144":[8808,11.2,47.17,5.2832],"Timor Perbatasan-Belu":[1368,1.74,83.5,1.4525],"Timor Perbatasan-Malaka":[8843,11.24,80.19,9.0171]},"s2t":[78640,87.76]}};
 
-const S={oc:'All',tab:'ov',ind:'IND6',ap:'Manggarai Timur-04557',cmpAPs:['Bengkayang-05144','Kubu Raya-04221','Landak-03780','Simokerto-04222','Manggarai Timur-04557'],cmpOC:'All',indTab:'overall'};
+// ──────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────
+const S={
+  oc:'All',
+  tab:'ov',
+  ind:'IND6',
+  ap:'Manggarai Timur-04557',
+  cmpAPs:['Bengkayang-05144','Kubu Raya-04221','Landak-03780','Simokerto-04222','Manggarai Timur-04557'],
+  cmpOC:'All',
+  indTab:'overall',
+  hmAPs:null   // null = semua AP ditampilkan; array = daftar AP yang dipilih
+};
+
 const CHS={};
 const OCC={OC1:'#2a78d6',OC2:'#1baf7a',OC3:'#F37021',OC4:'#4a3aa7',Goal:'#007934'};
 const PAL=['#003A6B','#F37021','#1baf7a','#4a3aa7','#e34948'];
 
+// ──────────────────────────────────────────────
+// Utilities
+// ──────────────────────────────────────────────
 function pct(d,n){return d>0?+(n/d*100).toFixed(2):null;}
 function tier(r,neg){if(neg)return r<30?'H':r<=60?'M':'L';return r>=70?'H':r>=40?'M':'L';}
 function tclr(r,neg){return{H:'#007934',M:'#F37021',L:'#e24b4a'}[tier(r,neg)];}
@@ -230,25 +255,54 @@ function dch(id){if(CHS[id]){CHS[id].destroy();delete CHS[id];}}
 function fmt(v){return v!=null?v.toFixed(2)+'%':'—';}
 function mkCh(id,wrapId,cfg,n){dch(id);const w=document.getElementById(wrapId);if(w)w.style.height=n+'px';CHS[id]=new Chart(document.getElementById(id),cfg);}
 
+// ──────────────────────────────────────────────
+// Navigation
+// ──────────────────────────────────────────────
 function setOC(b){S.oc=b.dataset.oc;document.querySelectorAll('[data-oc]').forEach(x=>x.classList.toggle('on',x.dataset.oc===S.oc));rerender();}
 function rerender(){({ov:renderOv,ind:renderInd,ap:renderAP,cmp:renderCmp,sk:renderSK})[S.tab]();}
 function goTab(id,btn){document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('on',e.id==='t-'+id));document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b===btn));S.tab=id;rerender();}
 function goIndTab(tab,btn){document.querySelectorAll('.itab').forEach(b=>b.classList.toggle('on',b===btn));document.querySelectorAll('.itc').forEach(e=>e.classList.toggle('on',e.id==='it-'+tab));S.indTab=tab;renderIndTab();}
 
+// ──────────────────────────────────────────────
+// Overview — bar chart
+// ──────────────────────────────────────────────
 function renderOv(){
   const ks=[];
-  ['OC1','OC2','OC3','OC4','Goal'].forEach(oc=>{Object.keys(D.inds).filter(k=>D.inds[k].oc===oc&&(S.oc==='All'||oc===S.oc)).sort((a,b)=>(D.weighted[b]||0)-(D.weighted[a]||0)).forEach(k=>ks.push(k));});
+  ['OC1','OC2','OC3','OC4','Goal'].forEach(oc=>{
+    Object.keys(D.inds)
+      .filter(k=>D.inds[k].oc===oc&&(S.oc==='All'||oc===S.oc))
+      .sort((a,b)=>(D.weighted[b]||0)-(D.weighted[a]||0))
+      .forEach(k=>ks.push(k));
+  });
   const h=ks.length*30+60;
   mkCh('ch-ov','ov-cw',{type:'bar',data:{labels:ks.map(k=>`[${k}] ${D.inds[k].l.slice(0,30)}`),datasets:[{data:ks.map(k=>D.weighted[k]||0),backgroundColor:ks.map(k=>tclr(D.weighted[k]||0,D.inds[k].neg)),borderWidth:0,borderRadius:3,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+'%'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'#e1e0d944'}},y:{ticks:{font:{size:8}},grid:{display:false}}}}},h);
-  const allAPs=apList();
+
+  // Heatmap + filter
+  buildHmFilter();
+  renderHeatmap();
+}
+
+// ──────────────────────────────────────────────
+// Heatmap rendering (terpisah agar bisa dipanggil
+// ulang tanpa rebuild bar chart)
+// ──────────────────────────────────────────────
+function renderHeatmap(){
+  const all=apList();
+  const filtAPs=S.hmAPs!==null?S.hmAPs:all;
   const allInds=Object.keys(D.inds).filter(k=>S.oc==='All'||D.inds[k].oc===S.oc);
+
+  if(filtAPs.length===0){
+    document.getElementById('hm').innerHTML='<div class="nodata" style="padding:20px">Tidak ada AP yang dipilih — gunakan filter di bawah untuk menampilkan data.</div>';
+    return;
+  }
+
   let h2='<table class="hm"><thead><tr><th class="an">AP</th>';
   allInds.forEach(k=>h2+=`<th title="${D.inds[k].l}">${k.replace('C1A.0','C1').replace('C2A.0','C2')}</th>`);
   h2+='</tr></thead><tbody>';
-  allAPs.forEach(a=>{
-    const x=X; h2+=`<tr><td class="an" title="${a}">${ash(a)}</td>`;
+  filtAPs.forEach(a=>{
+    h2+=`<tr><td class="an" title="${a}">${ash(a)}</td>`;
     allInds.forEach(k=>{
-      const s1=(X[k]||{}).s1||{}; const dn=s1[a];
+      const s1=(X[k]||{}).s1||{};const dn=s1[a];
       if(!dn||dn[0]===0)h2+=`<td style="background:#e8e7e344;color:#aaa;font-size:7px">—</td>`;
       else{const r=pct(dn[0],dn[1]);const bg=tclr(r,D.inds[k].neg);h2+=`<td style="background:${bg}28;color:${bg};font-weight:500" title="${a}: ${k}=${r}%">${r!=null?r.toFixed(0):0}</td>`;}
     });
@@ -258,6 +312,63 @@ function renderOv(){
   document.getElementById('hm').innerHTML=h2;
 }
 
+// ──────────────────────────────────────────────
+// Heatmap AP Filter UI
+// ──────────────────────────────────────────────
+function buildHmFilter(){
+  const all=apList();
+  const sel=S.hmAPs!==null?S.hmAPs:all;
+  const isAll=S.hmAPs===null||sel.length===all.length;
+
+  let h='<div class="hm-flt">';
+  h+=`<span class="hm-flt-lbl">Filter AP Heatmap:</span>`;
+  h+=`<button class="fb${isAll?' on':''}" onclick="hmSelectAll()">Semua</button>`;
+  h+=`<button class="fb fb-clr" onclick="hmClearAll()">Hapus Semua</button>`;
+  h+=`<span class="hm-flt-sep">|</span>`;
+  all.forEach(a=>{
+    const on=sel.includes(a);
+    // escape single quotes saja; karakter lain aman dalam onclick string
+    const esc=a.replace(/'/g,"\\'");
+    h+=`<button class="cba${on?' on':''}" onclick="togHmAP('${esc}',this)" title="${a}">${ash(a)}</button>`;
+  });
+  h+=`<span class="hm-flt-cnt">${sel.length} / ${all.length} AP</span>`;
+  h+='</div>';
+  document.getElementById('hm-ap-filter').innerHTML=h;
+}
+
+function togHmAP(ap,btn){
+  const all=apList();
+  // Kalau masih null (semua), ekspansi dulu ke array lengkap
+  if(S.hmAPs===null) S.hmAPs=[...all];
+  const idx=S.hmAPs.indexOf(ap);
+  if(idx>=0){
+    // Jangan sampai list kosong saat toggle — min 1 AP
+    if(S.hmAPs.length>1) S.hmAPs.splice(idx,1);
+  } else {
+    S.hmAPs.push(ap);
+    // Kalau sudah semua terpilih lagi, kembalikan ke null
+    if(S.hmAPs.length===all.length) S.hmAPs=null;
+  }
+  buildHmFilter();
+  renderHeatmap();
+}
+
+function hmSelectAll(){
+  S.hmAPs=null;
+  buildHmFilter();
+  renderHeatmap();
+}
+
+function hmClearAll(){
+  // Kosongkan — heatmap akan tampilkan pesan empty state
+  S.hmAPs=[];
+  buildHmFilter();
+  renderHeatmap();
+}
+
+// ──────────────────────────────────────────────
+// Per Indikator
+// ──────────────────────────────────────────────
 function populateIndSel(){
   const sel=document.getElementById('sel-ind');const grps={};
   Object.keys(D.inds).forEach(k=>{const oc=D.inds[k].oc;if(!grps[oc])grps[oc]=[];grps[oc].push(k);});
@@ -299,7 +410,7 @@ function renderIndOverall(ind,x){
 }
 
 function mkDisaggChart(canvasId,wrapId,aps_,data1,data2,lbl1,lbl2,col1,col2){
-  if(!aps_.length){return;}
+  if(!aps_.length)return;
   const h=aps_.length*36+80;
   mkCh(canvasId,wrapId,{type:'bar',data:{labels:aps_.map(ash),datasets:[{label:lbl1,data:data1,backgroundColor:col1+'CC',borderRadius:2,barThickness:11},{label:lbl2,data:data2,backgroundColor:col2+'AA',borderRadius:2,barThickness:11}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:9},boxWidth:10}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}}},y:{ticks:{font:{size:9}}}}}},h);
 }
@@ -313,52 +424,48 @@ function mkDisaggTable(containerId,headers,aps_,rows){
 }
 
 function renderIndSex(ind,x){
-  const s4=x.s4||{};
-  const aps_=Object.keys(s4);
+  const s4=x.s4||{};const aps_=Object.keys(s4);
   if(!aps_.length){document.getElementById('sex-cw').style.display='none';document.getElementById('tbl-sex').innerHTML='<div class="nodata">Data disagregasi gender tidak tersedia untuk indikator ini</div>';return;}
   document.getElementById('sex-cw').style.display='block';
-  const fRates=aps_.map(a=>pct(s4[a][0],s4[a][1]));
-  const mRates=aps_.map(a=>pct(s4[a][2],s4[a][3]));
+  const fRates=aps_.map(a=>pct(s4[a][0],s4[a][1]));const mRates=aps_.map(a=>pct(s4[a][2],s4[a][3]));
   mkDisaggChart('ch-sex','sex-cw',aps_,fRates,mRates,'Female (%)','Male (%)','#e87ba4','#2a78d6');
   const rows=aps_.map((a,i)=>[a,s4[a][0],s4[a][1],fmt(fRates[i]),s4[a][2],s4[a][3],fmt(mRates[i])]);
   mkDisaggTable('tbl-sex',['AP','Denom (F)','Num (F)','Rate F (%)','Denom (M)','Num (M)','Rate M (%)'],aps_,rows);
 }
 
 function renderIndRC(ind,x){
-  const s5=x.s5||{};
-  const aps_=Object.keys(s5);
+  const s5=x.s5||{};const aps_=Object.keys(s5);
   if(!aps_.length){document.getElementById('rc-cw').style.display='none';document.getElementById('tbl-rc').innerHTML='<div class="nodata">Data disagregasi RC/Non-RC tidak tersedia untuk indikator ini</div>';return;}
   document.getElementById('rc-cw').style.display='block';
-  const rcR=aps_.map(a=>pct(s5[a][0],s5[a][1]));
-  const nrcR=aps_.map(a=>pct(s5[a][2],s5[a][3]));
+  const rcR=aps_.map(a=>pct(s5[a][0],s5[a][1]));const nrcR=aps_.map(a=>pct(s5[a][2],s5[a][3]));
   mkDisaggChart('ch-rc','rc-cw',aps_,rcR,nrcR,'RC/Sponsored (%)','Non-RC (%)','#F37021','#1baf7a');
   const rows=aps_.map((a,i)=>[a,s5[a][0],s5[a][1],fmt(rcR[i]),s5[a][2],s5[a][3],fmt(nrcR[i])]);
   mkDisaggTable('tbl-rc',['AP','Denom (RC)','Num (RC)','Rate RC (%)','Denom (Non-RC)','Num (Non-RC)','Rate Non-RC (%)'],aps_,rows);
 }
 
 function renderIndDis(ind,x){
-  const s6=x.s6||{};
-  const aps_=Object.keys(s6).filter(a=>s6[a][0]+s6[a][2]>0);
+  const s6=x.s6||{};const aps_=Object.keys(s6).filter(a=>s6[a][0]+s6[a][2]>0);
   if(!aps_.length){document.getElementById('dis-cw').style.display='none';document.getElementById('tbl-dis').innerHTML='<div class="nodata">Data disagregasi disabilitas tidak tersedia</div>';return;}
   document.getElementById('dis-cw').style.display='block';
-  const dR=aps_.map(a=>pct(s6[a][0],s6[a][1]));
-  const ndR=aps_.map(a=>pct(s6[a][2],s6[a][3]));
+  const dR=aps_.map(a=>pct(s6[a][0],s6[a][1]));const ndR=aps_.map(a=>pct(s6[a][2],s6[a][3]));
   mkDisaggChart('ch-dis','dis-cw',aps_,dR,ndR,'Disability (%)','No Disability (%)','#e34948','#4a3aa7');
   const rows=aps_.map((a,i)=>[a,s6[a][0],s6[a][1],dR[i]!=null?dR[i].toFixed(2)+'%':'—',s6[a][2],s6[a][3],ndR[i]!=null?ndR[i].toFixed(2)+'%':'—']);
   mkDisaggTable('tbl-dis',['AP','Denom (Dis)','Num (Dis)','Rate Dis (%)','Denom (No Dis)','Num (No Dis)','Rate No Dis (%)'],aps_,rows);
 }
 
 function renderIndWeighted(ind,x){
-  const s2=x.s2||{};const s2t=x.s2t;
-  const aps_=Object.keys(s2);
+  const s2=x.s2||{};const s2t=x.s2t;const aps_=Object.keys(s2);
   if(!aps_.length){document.getElementById('tbl-weighted').innerHTML='<div class="nodata">Data weighted national tidak tersedia</div>';return;}
   let t=`<div style="overflow-x:auto"><table class="dtbl"><thead><tr><th>ADP</th><th>HH Targeted</th><th>ADP Weight (%)</th><th>ADP Rate (%)</th><th>Weighted Contribution (%)</th></tr></thead><tbody>`;
   aps_.forEach((a,i)=>{const v=s2[a];const bg=i%2?'background:var(--surface-1);':'';t+=`<tr style="${bg}"><td>${a}</td><td>${(v[0]||0).toLocaleString()}</td><td>${v[1]!=null?v[1].toFixed(2):'—'}</td><td>${v[2]!=null?v[2].toFixed(2):'—'}</td><td>${v[3]!=null?v[3].toFixed(4):'—'}</td></tr>`;});
-  if(s2t){const totalHH=Object.values(s2).reduce((s,v)=>s+(v[0]||0),0);t+=`<tr class="tot"><td>TOTAL</td><td>${s2t[0].toLocaleString()}</td><td>100.00</td><td colspan="1">—</td><td>${s2t[1].toFixed(4)}</td></tr>`;}
+  if(s2t)t+=`<tr class="tot"><td>TOTAL</td><td>${s2t[0].toLocaleString()}</td><td>100.00</td><td>—</td><td>${s2t[1].toFixed(4)}</td></tr>`;
   t+='</tbody></table></div>';
   document.getElementById('tbl-weighted').innerHTML=t;
 }
 
+// ──────────────────────────────────────────────
+// Per AP
+// ──────────────────────────────────────────────
 function populateAPSel(){
   const sel=document.getElementById('sel-ap');
   sel.innerHTML=Object.keys(D.aps).map(a=>`<option value="${a}">${a} (${D.aps[a].r})</option>`).join('');
@@ -370,11 +477,14 @@ function renderAP(){
   const m=D.aps[S.ap];
   document.getElementById('ap-meta').innerHTML=`<span class="pill" style="background:var(--surface-1);color:var(--text-secondary)">${m.r} · ${m.c}</span>`;
   const avInds=indList().filter(k=>{const s1=(X[k]||{}).s1||{};return s1[S.ap]&&s1[S.ap][0]>0;});
-  avInds.sort((a,b)=>{const sa=(X[a].s1||{})[S.ap];const sb=(X[b].s1||{})[S.ap];return (pct(sb[0],sb[1])||0)-(pct(sa[0],sa[1])||0);});
+  avInds.sort((a,b)=>{const sa=(X[a].s1||{})[S.ap];const sb=(X[b].s1||{})[S.ap];return(pct(sb[0],sb[1])||0)-(pct(sa[0],sa[1])||0);});
   const h=avInds.length*30+60;
   mkCh('ch-ap','ap-cw',{type:'bar',data:{labels:avInds.map(k=>`[${k}] ${D.inds[k].l.slice(0,26)}`),datasets:[{data:avInds.map(k=>{const dn=(X[k].s1||{})[S.ap];return dn?pct(dn[0],dn[1]):null;}),backgroundColor:avInds.map(k=>{const dn=(X[k].s1||{})[S.ap];const r=dn?pct(dn[0],dn[1]):0;return tclr(r,D.inds[k].neg);}),borderWidth:0,borderRadius:3,barThickness:16}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+'%'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}}},y:{ticks:{font:{size:8}},grid:{display:false}}}}},h);
 }
 
+// ──────────────────────────────────────────────
+// Bandingkan
+// ──────────────────────────────────────────────
 function buildCmpUI(){
   const cont=document.getElementById('ap-cbs');
   cont.innerHTML=Object.keys(D.aps).map(a=>`<button class="cba${S.cmpAPs.includes(a)?' on':''}" onclick="togCA('${a.replace(/'/g,"\\'")}',this)" title="${a}">${ash(a)}</button>`).join('');
@@ -388,6 +498,9 @@ function renderCmp(){
   mkCh('ch-cmp','cmp-cw',{type:'bar',data:{labels:ki.map(k=>k),datasets:S.cmpAPs.map((a,i)=>({label:ash(a),data:ki.map(k=>{const dn=((X[k]||{}).s1||{})[a];return dn&&dn[0]>0?pct(dn[0],dn[1]):null;}),backgroundColor:PAL[i]+'CC',borderWidth:0,borderRadius:2,barThickness:7}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{size:9},boxWidth:10}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}}},y:{ticks:{font:{size:9}}}}}},h);
 }
 
+// ──────────────────────────────────────────────
+// Sankey
+// ──────────────────────────────────────────────
 function renderSK(){
   const svg=document.getElementById('sk-svg');svg.innerHTML='';
   const ns='http://www.w3.org/2000/svg';
@@ -412,6 +525,13 @@ function renderSK(){
   const rx=el('text',{x:W-PAD,y:405,'text-anchor':'end','font-size':'9','font-family':'system-ui','fill':'#888'},svg);rx.textContent='Tier Kinerja';
 }
 
-populateIndSel();populateAPSel();buildCmpUI();renderOv();
+// ──────────────────────────────────────────────
+// Init
+// ──────────────────────────────────────────────
+populateIndSel();
+populateAPSel();
+buildCmpUI();
+renderOv();
 </script>
-</body></html>
+</body>
+</html>
